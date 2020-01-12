@@ -1,0 +1,113 @@
+#Docker compose file that creates the necessary services for a full outlier detection job
+#Zookeeper and Kafka are used for the input stream
+#Flink is used to generate a random input stream on the first job and to detect outliers on the second job
+#Influx is used to save the outlier output and the different metrics from Flink
+#Grafana is used for the visualization of the output and metrics
+#PORTS that are used in the stack do not need to be declared (ie 8086 for influxdb) since all services are on the same network
+#PORTS that are used for external services (ie 3000 for grafana) need to be declared
+#VOLUMES are used to save data for Influxdb and the visualizations for Grafana
+version: "3.2"
+
+networks:
+  outliers-net:
+
+services:
+  zoo:
+    image: ${ZOOKEEPER_IMAGE}
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=0.0.0.0:2888:3888;2181
+    networks:
+      - outliers-net
+#    ports:
+#      - 2181:2181
+    restart: always 
+
+  kafka:
+    image: ${KAFKA_IMAGE}
+    depends_on:
+      - zoo
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zoo:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
+      KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_BROKER_ID: 1
+      KAFKA_CREATE_TOPICS: ${KAFKA_TOPIC}:1:1
+    networks:
+      - outliers-net
+#    ports:
+#      - target: 9094
+#        published: 9094
+#        protocol: tcp
+#        mode: host
+    restart: always
+
+  jobmanager:
+    image: ${FLINK_IMAGE}:${OUTLIER_JOB_VERSION}
+    command: jobmanager
+    depends_on: 
+      - influxdb
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_TOPIC=${KAFKA_TOPIC}
+      - INFLUXDB_HOST=${INFLUX_SERVER}
+      - INFLUXDB_USER=${INFLUX_USER}
+      - INFLUXDB_PASSWORD=${INFLUX_PASSWORD}
+      - INFLUXDB_DB=${INFLUX_DB}
+      - ${FLINK_PROPERTIES}
+    networks:
+      - outliers-net
+    ports:
+      - "8081:8081"
+      - "8000:8000"
+    restart: always
+
+  taskmanager:
+    image: ${FLINK_IMAGE}:${OUTLIER_JOB_VERSION}
+    command: taskmanager
+    depends_on: 
+      - jobmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+      - TASK_MANAGER_NUMBER_OF_TASK_SLOTS=17
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_TOPIC=${KAFKA_TOPIC}
+      - INFLUXDB_HOST=${INFLUX_SERVER}
+      - INFLUXDB_USER=${INFLUX_USER}
+      - INFLUXDB_PASSWORD=${INFLUX_PASSWORD}
+      - INFLUXDB_DB=${INFLUX_DB}
+      - ${FLINK_PROPERTIES}
+    networks:
+      - outliers-net
+    restart: always
+
+  influxdb:
+    image: ${INFLUX_IMAGE}
+    environment:
+      - INFLUXDB_ADMIN_USER=${INFLUX_USER}
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUX_PASSWORD}
+      - INFLUXDB_DB=${INFLUX_DB_METRICS}
+#    volumes:
+#     - ./data/influxdb:/var/lib/influxdb
+    networks:
+      - outliers-net
+#    ports:
+#      - "8086:8086"
+    restart: always
+    
+  grafana:
+    image: ${GRAFANA_IMAGE}
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    user: ${myid}
+    volumes:
+     - ./data/grafana:/var/lib/grafana
+    networks:
+      - outliers-net
+    ports:
+      - "3000:3000"
+    restart: always
+    

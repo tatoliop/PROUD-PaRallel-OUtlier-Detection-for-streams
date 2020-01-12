@@ -1,0 +1,13 @@
+FROM flink:%%FLINK_VERSION%%
+#Install python
+RUN apt-get update; \
+  apt-get install -y python3
+# Configure container
+RUN cp $FLINK_HOME/opt/flink-metrics-influxdb-*.jar $FLINK_HOME/lib/
+ENV ARTIFACTS=/opt/artifacts
+ENV JOB_INPUT=$ARTIFACTS/data
+ENV JOB_NAME=%%JOB_NAME%%
+RUN echo alias flink=$FLINK_HOME/bin/flink >> ~/.bashrc
+COPY assets $ARTIFACTS
+EXPOSE 8000
+CMD ["help"]
