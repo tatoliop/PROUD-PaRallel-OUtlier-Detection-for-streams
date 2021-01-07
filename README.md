@@ -73,8 +73,10 @@ The available ports that are exposed from the Docker deployment through the abov
 
 ### Version 3.2.0
 
-* Added adaptive partitioning on VP tree technique along with 3 algorithms to support the adaptations
+* Added adaptive partitioning on VP tree technique along with 3 algorithms to support the adaptations.
+
+* Initial code for adaptations in package `adapt`. Classes `Adapt`, `NaiveAdapt` and `NoAdapt` contain all the new functionalities.
 
 ### Version 3.1.0
 
-* Moved to PROUD repository
+* Moved to PROUD repository.
