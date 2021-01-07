@@ -68,3 +68,13 @@ The available ports that are exposed from the Docker deployment through the abov
 - 8000: User Interface
 - 8081: Flink's Web UI 
 - 3000: Grafana's Web UI
+
+## Changelog
+
+### Version 3.2.0
+
+* Added adaptive partitioning on VP tree technique along with 3 algorithms to support the adaptations
+
+### Version 3.1.0
+
+* Moved to PROUD repository

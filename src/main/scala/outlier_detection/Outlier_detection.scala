@@ -2,7 +2,7 @@ package outlier_detection
 
 import java.util.Properties
 
-import utils.Helpers.find_gcd
+import utils.Helpers.{find_gcd, readEnvVariable}
 import models._
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala.createTypeInformation
@@ -24,6 +24,7 @@ import scala.collection.mutable.ListBuffer
 object Outlier_detection {
 
   val delimiter = ";"
+  val file_delimiter = ","
   val line_delimiter = "&"
 
   def main(args: Array[String]) {
@@ -47,9 +48,7 @@ object Outlier_detection {
     //Hardcoded parameter for partitioning and windowing
     val partitions = 16
     //Input file
-    val file_input = System.getenv("JOB_INPUT") //File input
-    //Input topic
-    val kafka_topic = System.getenv("KAFKA_TOPIC") //File input
+    val file_input = readEnvVariable("JOB_INPUT") //File input
 
     //Pre-process parameters for initializations
     val common_W = if (window_W.length > 1) window_W.max else window_W.head
@@ -75,15 +74,16 @@ object Outlier_detection {
     else null
 
     //InfluxDB
-    val influxdb_host = System.getenv("INFLUXDB_HOST")
-    val influxdb_user = System.getenv("INFLUXDB_USER")
-    val influxdb_pass = System.getenv("INFLUXDB_PASSWORD")
-    val influxdb_db = System.getenv("INFLUXDB_DB")
+    val influxdb_host = readEnvVariable("INFLUXDB_HOST")
+    val influxdb_user = readEnvVariable("INFLUXDB_USER")
+    val influxdb_pass = readEnvVariable("INFLUXDB_PASSWORD")
+    val influxdb_db = readEnvVariable("INFLUXDB_DB")
     val influx_conf: InfluxDBConfig =
       InfluxDBConfig.builder(influxdb_host, influxdb_user, influxdb_pass, influxdb_db).createDatabase(true)
         .build()
-    //Kafka brokers
-    val kafka_brokers = System.getenv("KAFKA_BROKERS")
+    //Kafka parameters
+    val kafka_brokers = readEnvVariable("KAFKA_BROKERS")
+    val kafka_topic = readEnvVariable("KAFKA_TOPIC")
     val properties = new Properties()
     properties.setProperty("bootstrap.servers", kafka_brokers)
 
@@ -95,13 +95,13 @@ object Outlier_detection {
     //Start reading from source
     //Either kafka or input file for debug
     val data: DataStream[Data_basis] = if (DEBUG) {
-      val myInput = s"$file_input/$dataset/input_20k.txt"
+      val myInput = s"$file_input/$dataset/input.txt"
       env
         .readTextFile(myInput)
         .map { record =>
           val splitLine = record.split(line_delimiter)
           val id = splitLine(0).toInt
-          val value = splitLine(1).split(delimiter).map(_.toDouble).to[ListBuffer]
+          val value = splitLine(1).split(file_delimiter).map(_.toDouble).to[ListBuffer]
           val timestamp = id.toLong
           new Data_basis(id, value, timestamp, 0)
         }

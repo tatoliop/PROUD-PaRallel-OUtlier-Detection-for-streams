@@ -97,6 +97,9 @@ public final class DistanceFunctions {
 		 *              #dimensions()}. 
 		 */
 		double get(int index);
+
+		boolean contains(double coord);
+
 	}
 	
 	
@@ -127,14 +130,40 @@ public final class DistanceFunctions {
 			return DistanceFunctions.euclidean(coord1, coord2);
 		}
 	};
-	
-	
+
+	public static double jaccard(EuclideanCoordinate coord1, EuclideanCoordinate coord2) {
+
+		int size = Math.min(coord1.dimensions(), coord2.dimensions());
+
+		int union = Math.max(coord1.dimensions(), coord2.dimensions());
+		int intersection = 0;
+		for(int i=0;i<size;i++){
+			if(coord1.dimensions() == size) {
+				if(coord2.contains(coord1.get(i))) intersection += 1;
+				else union += 1;
+			}else{
+				if(coord1.contains(coord2.get(i))) intersection += 1;
+				else union += 1;
+			}
+		}
+		double result = 1.0 - ((double)intersection / (double)union);
+
+		return result;
+	}
+
+	public static final DistanceFunction<EuclideanCoordinate> JACCARD = new DistanceFunction<DistanceFunctions.EuclideanCoordinate>() {
+		@Override
+		public double calculate(EuclideanCoordinate data1, EuclideanCoordinate data2) {
+			return DistanceFunctions.jaccard(data1, data2);
+		}
+	};
+
 	/**
 	 * A {@linkplain DistanceFunction distance function} object that calculates
 	 * the distance between two coordinates represented by {@linkplain 
 	 * java.util.List lists} of {@link java.lang.Integer}s.
 	 */
-	public static final DistanceFunction<List<Integer>> EUCLIDEAN_INTEGER_LIST = new DistanceFunction<List<Integer>>() {
+	/*public static final DistanceFunction<List<Integer>> EUCLIDEAN_INTEGER_LIST = new DistanceFunction<List<Integer>>() {
 		@Override
 		public double calculate(List<Integer> data1, List<Integer> data2) {
 			class IntegerListEuclideanCoordinate implements EuclideanCoordinate {
@@ -147,14 +176,14 @@ public final class DistanceFunctions {
 			IntegerListEuclideanCoordinate coord2 = new IntegerListEuclideanCoordinate(data2);
 			return DistanceFunctions.euclidean(coord1, coord2);
 		}
-	};
+	};*/
 	
 	/**
 	 * A {@linkplain DistanceFunction distance function} object that calculates
 	 * the distance between two coordinates represented by {@linkplain 
 	 * java.util.List lists} of {@link java.lang.Double}s.
 	 */
-	public static final DistanceFunction<List<Double>> EUCLIDEAN_DOUBLE_LIST = new DistanceFunction<List<Double>>() {
+	/*public static final DistanceFunction<List<Double>> EUCLIDEAN_DOUBLE_LIST = new DistanceFunction<List<Double>>() {
 		@Override
 		public double calculate(List<Double> data1, List<Double> data2) {
 			class DoubleListEuclideanCoordinate implements EuclideanCoordinate {
@@ -167,8 +196,8 @@ public final class DistanceFunctions {
 			DoubleListEuclideanCoordinate coord2 = new DoubleListEuclideanCoordinate(data2);
 			return DistanceFunctions.euclidean(coord1, coord2);
 		}
-	};
+	};*/
 	
-	
+
 	
 }

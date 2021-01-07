@@ -1115,8 +1115,8 @@ public class MTree<DATA> implements Serializable {
                 thisNode.updateRadius(child);
             } catch (SplitNodeReplacement e) {
                 // Replace current child with new nodes
-                IndexItem _ = thisNode.children.remove(child.data);
-                assert _ != null;
+                IndexItem a = thisNode.children.remove(child.data);
+                assert a != null;
 
                 for (int i = 0; i < e.newNodes.length; ++i) {
                     @SuppressWarnings("unchecked")
@@ -1164,8 +1164,8 @@ public class MTree<DATA> implements Serializable {
                     try {
                         existingChild.checkMaxCapacity();
                     } catch (SplitNodeReplacement e) {
-                        IndexItem _ = thisNode.children.remove(existingChild.data);
-                        assert _ != null;
+                        IndexItem a = thisNode.children.remove(existingChild.data);
+                        assert a != null;
 
                         for (int i = 0; i < e.newNodes.length; ++i) {
                             @SuppressWarnings("unchecked")
@@ -1266,8 +1266,8 @@ public class MTree<DATA> implements Serializable {
                     }
                 }
 
-                IndexItem _ = nearestDonor.children.remove(nearestGrandchild.data);
-                assert _ != null;
+                IndexItem a = nearestDonor.children.remove(nearestGrandchild.data);
+                assert a != null;
                 theChild.addChild(nearestGrandchild, nearestGrandchildDistance);
                 return theChild;
             }

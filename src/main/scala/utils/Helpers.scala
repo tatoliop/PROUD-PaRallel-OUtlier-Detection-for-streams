@@ -5,11 +5,10 @@ import scala.collection.mutable.ListBuffer
 
 object Helpers {
 
-  private val distance_type = "euclidean"
-
-  def distance(xs: Array[Double], ys: Array[Double]): Double ={
+  def distance(xs: Array[Double], ys: Array[Double], distance_type: String = "euclidean"): Double ={
     val res = distance_type match {
       case "euclidean" => euclidean_distance(xs, ys)
+      case "jaccard" => jaccard_distance(xs, ys)
     }
     res
   }
@@ -21,6 +20,15 @@ object Helpers {
       value += scala.math.pow(xs(i) - ys(i), 2)
     }
     val res = scala.math.sqrt(value)
+    res
+  }
+
+  private def jaccard_distance(xs: Array[Double], ys: Array[Double]): Double ={
+    val xSet: Set[Double] = xs.toSet
+    val ySet: Set[Double] = ys.toSet
+    val union = xSet.union(ySet).size.toDouble
+    val intersect = xSet.intersect(ySet).size
+    val res = 1 - (intersect / union)
     res
   }
 
@@ -75,5 +83,19 @@ object Helpers {
     }
     result
   }
+
+  /**
+    * Method to read environment variables
+    * @param key The key of the variable
+    * @return The variable
+    */
+  @throws[NullPointerException]
+  def readEnvVariable(key: String): String = {
+    val envVariable = System.getenv(key)
+    if (envVariable == null) throw new NullPointerException("Error! Environment variable " + key + " is missing")
+    envVariable
+  }
+
+  def IsPowerOfTwo(x: Int): Boolean = (x & (x - 1)) == 0
 
 }
