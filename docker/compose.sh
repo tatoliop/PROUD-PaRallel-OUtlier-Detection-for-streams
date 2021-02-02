@@ -11,7 +11,7 @@ function build_flink () {
 		echo "Image not found"
 		#Build flink image
 		echo "Building the fat jar"
-		#(cd ../ ; sbt clean assembly)
+		(cd ../ ; sbt clean assembly)
 		cp -r ../data/ outliers_flink/assets
 		cp ../target/scala-${SCALA_JOB_VERSION}/${OUTLIER_JOB_NAME} outliers_flink/assets/${OUTLIER_JOB_NAME}
 		echo "Building the Flink image ${FLINK_IMAGE}:${OUTLIER_JOB_VERSION}"
@@ -54,11 +54,11 @@ elif [ "$1" = "debug" ]; then
 	cp ../target/scala-2.11/$OUTLIER_JOB_NAME outliers.jar
 	docker cp outliers.jar $container_manager:${ARTIFACT_PATH}/outliers.jar
 	#Start outliers
-	docker container exec -it $container_manager bin/flink run -d ${ARTIFACT_PATH}/outliers.jar --space single --algorithm pmcod --W 10000 --S 500 --k 50 --R 0.35 --dataset STK --partitioning tree
+#	docker container exec -it $container_manager bin/flink run --parallelism 16 -d ${ARTIFACT_PATH}/outliers.jar --policy static --algorithm pmcod --W 10000 --S 500 --k 50 --R 0.45 --dataset STK -partitioning tree --partitions 3
+	docker container exec -it $container_manager bin/flink run --parallelism 16 -d ${ARTIFACT_PATH}/outliers.jar --policy advanced --algorithm pmcod --W 10000 --S 500 --k 50 --R 0.45 --dataset STK -partitioning tree --partitions 3
 	#Start custom source
 	docker container exec -it $container_manager bin/flink run -d -c custom_source.Custom_source ${ARTIFACT_PATH}/outliers.jar --dataset STK
 else
-	echo "Usage: $(basename "$0") (start|stop|job|build|debug)"
+	echo "Usage: $(basename "$0") (start|stop|build|ui|debug)"
 fi
 exit 0
-

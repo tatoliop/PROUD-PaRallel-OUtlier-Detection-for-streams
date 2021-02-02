@@ -1,5 +1,6 @@
 #Docker compose file that creates the necessary services for a full outlier detection job
 #Zookeeper and Kafka are used for the input stream
+#Redis is used for the dynamic adaptation option
 #Flink is used to generate a random input stream on the first job and to detect outliers on the second job
 #Influx is used to save the outlier output and the different metrics from Flink
 #Grafana is used for the visualization of the output and metrics
@@ -30,18 +31,28 @@ services:
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zoo:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9092,OUTSIDE://localhost:9094
       KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_BROKER_ID: 1
       KAFKA_CREATE_TOPICS: ${KAFKA_TOPIC}:1:1
     networks:
       - outliers-net
+    ports:
+      - target: 9094
+        published: 9094
+        protocol: tcp
+        mode: host
+    restart: always
+
+  redis:
+    image: ${REDIS_IMAGE}
+    depends_on:
+      - zoo
+    networks:
+      - outliers-net
 #    ports:
-#      - target: 9094
-#        published: 9094
-#        protocol: tcp
-#        mode: host
+#      - 6379:6379
     restart: always
 
   jobmanager:
@@ -49,6 +60,7 @@ services:
     command: jobmanager
     depends_on: 
       - influxdb
+      - redis
     environment:
       - JOB_MANAGER_RPC_ADDRESS=jobmanager
       - KAFKA_BROKERS=${KAFKA_BROKERS}
@@ -57,6 +69,9 @@ services:
       - INFLUXDB_USER=${INFLUX_USER}
       - INFLUXDB_PASSWORD=${INFLUX_PASSWORD}
       - INFLUXDB_DB=${INFLUX_DB}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_DB=${REDIS_DB}
       - ${FLINK_PROPERTIES}
     networks:
       - outliers-net
@@ -79,6 +94,9 @@ services:
       - INFLUXDB_USER=${INFLUX_USER}
       - INFLUXDB_PASSWORD=${INFLUX_PASSWORD}
       - INFLUXDB_DB=${INFLUX_DB}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_DB=${REDIS_DB}
       - ${FLINK_PROPERTIES}
     networks:
       - outliers-net
@@ -94,8 +112,8 @@ services:
 #     - ./data/influxdb:/var/lib/influxdb
     networks:
       - outliers-net
-#    ports:
-#      - "8086:8086"
+    ports:
+      - "8086:8086"
     restart: always
     
   grafana:

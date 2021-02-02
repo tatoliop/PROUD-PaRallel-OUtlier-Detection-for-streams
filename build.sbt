@@ -1,6 +1,6 @@
 ThisBuild / resolvers ++= Seq("Apache Development Snapshot Repository" at "https://repository.apache.org/content/repositories/snapshots/", Resolver.mavenLocal)
 
-ThisBuild / version := "3.1.0"
+ThisBuild / version := "3.2.1"
 ThisBuild / organization := "org.auth.csd.datalab"
 ThisBuild / scalaVersion := "2.11.12"
 
@@ -10,17 +10,18 @@ val flinkDependencies = Seq(
   "org.apache.flink" %% "flink-scala" % flinkVersion % "provided",
   "org.apache.flink" %% "flink-streaming-scala" % flinkVersion % "provided",
   "org.apache.flink" %% "flink-connector-kafka" % flinkVersion,
-  "org.apache.bahir" %% "flink-connector-influxdb" % "1.1-SNAPSHOT"
+  "org.apache.bahir" %% "flink-connector-influxdb" % "1.1-SNAPSHOT",
+  "org.apache.bahir" %% "flink-connector-redis" % "1.1-SNAPSHOT"
 )
 
 lazy val root = (project in file(".")).
   settings(
     name := "PROUD",
     libraryDependencies ++= flinkDependencies,
-    libraryDependencies += "org.apache.kafka" % "kafka-clients" % "2.2.1"
+    libraryDependencies += "net.debasishg" %% "redisclient" % "3.9"
   )
 
-assembly / mainClass := Some("outlier_detection.Outlier_detection")
+assembly / mainClass := Some("main_job.Outlier_detection")
 
 // make run command include the provided dependencies
 Compile / run  := Defaults.runTask(

@@ -360,18 +360,82 @@ public class VPTree<P, E extends P> implements SpatialIndex<P, E>, Serializable 
 
     //OUTLIER DETECTION CUSTOM FUNCTIONS
 
-    public void myFunc(){
-        this.rootNode.myFunc();
-    }
-
-    public int minHeight(){
+    private int minHeight(){
         return this.rootNode.minHeight();
     }
 
-    public int maxHeight(){
+    private int maxHeight(){
         return this.rootNode.maxHeight();
     }
 
+    public HashMap<String, Double> getThresholds(int height, String delimiter) {
+        HashMap<String, Double> finalMap = new HashMap<>();
+        int treeHeight = this.minHeight();
+        if(treeHeight >= height){
+            int tmp_height = 0;
+            Queue<VPTreeNode> queue = new LinkedList<VPTreeNode>();
+            queue.add(this.rootNode);
+            do{
+                Queue<VPTreeNode> tmp_queue = new LinkedList<VPTreeNode>();
+                int count = 1;
+                do{
+                    VPTreeNode tmp = queue.poll();
+                    Double threshold = tmp.getThresh();
+                    String key = tmp_height + delimiter + count;
+                    finalMap.put(key, threshold);
+                    if(tmp_height<treeHeight) {
+                        tmp_queue.add(tmp.get_closer());
+                        tmp_queue.add(tmp.get_farther());
+                    }
+                    count++;
+                }while (!queue.isEmpty());
+                queue.clear();
+                queue.addAll(tmp_queue);
+                tmp_queue.clear();
+                tmp_height+=1;
+            }while (tmp_height <= height);
+        }else{
+            System.out.println("Height Error");
+            System.exit(1);
+        }
+        return finalMap;
+    }
+
+    public HashMap<String, Object> getVPs(int height, String delimiter) {
+        HashMap<String, Object> finalMap = new HashMap<>();
+        int treeHeight = this.minHeight();
+        if(treeHeight >= height){
+            int tmp_height = 0;
+            Queue<VPTreeNode> queue = new LinkedList<VPTreeNode>();
+            queue.add(this.rootNode);
+            do{
+                Queue<VPTreeNode> tmp_queue = new LinkedList<VPTreeNode>();
+                int count = 1;
+                do{
+                    VPTreeNode tmp = queue.poll();
+                    Object vp = tmp.getVP();
+                    String key = tmp_height + delimiter + count;
+                    finalMap.put(key, vp);
+                    if(tmp_height<treeHeight) {
+                        tmp_queue.add(tmp.get_closer());
+                        tmp_queue.add(tmp.get_farther());
+                    }
+                    count++;
+                }while (!queue.isEmpty());
+                queue.clear();
+                queue.addAll(tmp_queue);
+                tmp_queue.clear();
+                tmp_height+=1;
+            }while (tmp_height <= height);
+        }else{
+            System.out.println("Height Error");
+            System.exit(1);
+        }
+        return finalMap;
+    }
+
+
+    //old
     public void createPartitions(Integer partitions){
         int height = 0;
         int temp = (int) Math.floor(Math.sqrt(partitions));
@@ -405,45 +469,6 @@ public class VPTree<P, E extends P> implements SpatialIndex<P, E>, Serializable 
         }else{
             System.out.println("Height Error");
         }
-    }
-
-    public void showPartitions(){
-        System.out.println("Root " +  this.rootNode.show_partition());
-        System.out.println("lvl 1: " +  this.rootNode.get_closer().show_partition() + " " + this.rootNode.get_farther().show_partition());
-        System.out.println("lvl 2: " +  this.rootNode.get_closer().get_closer().show_partition() + " " + this.rootNode.get_closer().get_farther().show_partition()
-                + " " + this.rootNode.get_farther().get_closer().show_partition() + " " + this.rootNode.get_farther().get_farther().show_partition());
-        System.out.println("lvl 3: " +  this.rootNode.get_closer().get_closer().get_closer().show_partition() + " " + this.rootNode.get_closer().get_closer().get_farther().show_partition()
-                + " " + this.rootNode.get_closer().get_farther().get_closer().show_partition() + " " + this.rootNode.get_closer().get_farther().get_farther().show_partition()
-                + " " + this.rootNode.get_farther().get_closer().get_closer().show_partition() + " " + this.rootNode.get_farther().get_closer().get_farther().show_partition()
-                + " " + this.rootNode.get_farther().get_farther().get_closer().show_partition() + " " + this.rootNode.get_farther().get_farther().get_farther().show_partition());
-        System.out.println("lvl 4:"
-                + " " + this.rootNode.get_closer().get_closer().get_closer().get_closer().show_partition() + " " + this.rootNode.get_closer().get_closer().get_closer().get_farther().show_partition()
-                + " " + this.rootNode.get_closer().get_closer().get_farther().get_closer().show_partition() + " " + this.rootNode.get_closer().get_closer().get_farther().get_farther().show_partition()
-                + " " + this.rootNode.get_closer().get_farther().get_closer().get_closer().show_partition() + " " + this.rootNode.get_closer().get_farther().get_closer().get_farther().show_partition()
-                + " " + this.rootNode.get_closer().get_farther().get_farther().get_closer().show_partition() + " " + this.rootNode.get_closer().get_farther().get_farther().get_farther().show_partition()
-                + " " + this.rootNode.get_farther().get_closer().get_closer().get_closer().show_partition() + " " + this.rootNode.get_farther().get_closer().get_closer().get_farther().show_partition()
-                + " " + this.rootNode.get_farther().get_closer().get_farther().get_closer().show_partition() + " " + this.rootNode.get_farther().get_closer().get_farther().get_farther().show_partition()
-                + " " + this.rootNode.get_farther().get_farther().get_closer().get_closer().show_partition() + " " + this.rootNode.get_farther().get_farther().get_closer().get_farther().show_partition()
-                + " " + this.rootNode.get_farther().get_farther().get_farther().get_closer().show_partition() + " " + this.rootNode.get_farther().get_farther().get_farther().get_farther().show_partition()
-        );
-        System.out.println("Vantage lvl 3: " +  this.rootNode.get_closer().get_closer().get_closer().myVantage() + " " + this.rootNode.get_closer().get_closer().get_farther().myVantage()
-                + " " + this.rootNode.get_closer().get_farther().get_closer().myVantage() + " " + this.rootNode.get_closer().get_farther().get_farther().myVantage()
-                + " " + this.rootNode.get_farther().get_closer().get_closer().myVantage() + " " + this.rootNode.get_farther().get_closer().get_farther().myVantage()
-                + " " + this.rootNode.get_farther().get_farther().get_closer().myVantage() + " " + this.rootNode.get_farther().get_farther().get_farther().myVantage());
-
-//        System.out.println("Vantage lvl 4:"
-//                + " " + this.rootNode.get_closer().get_closer().get_closer().get_closer().myVantage() + " " + this.rootNode.get_closer().get_closer().get_closer().get_farther().myVantage()
-//                + " " + this.rootNode.get_closer().get_closer().get_farther().get_closer().myVantage() + " " + this.rootNode.get_closer().get_closer().get_farther().get_farther().myVantage()
-//                + " " + this.rootNode.get_closer().get_farther().get_closer().get_closer().myVantage() + " " + this.rootNode.get_closer().get_farther().get_closer().get_farther().myVantage()
-//                + " " + this.rootNode.get_closer().get_farther().get_farther().get_closer().myVantage() + " " + this.rootNode.get_closer().get_farther().get_farther().get_farther().myVantage()
-//                + " " + this.rootNode.get_farther().get_closer().get_closer().get_closer().myVantage() + " " + this.rootNode.get_farther().get_closer().get_closer().get_farther().myVantage()
-//                + " " + this.rootNode.get_farther().get_closer().get_farther().get_closer().myVantage() + " " + this.rootNode.get_farther().get_closer().get_farther().get_farther().myVantage()
-//                + " " + this.rootNode.get_farther().get_farther().get_closer().get_closer().myVantage() + " " + this.rootNode.get_farther().get_farther().get_closer().get_farther().myVantage()
-//                + " " + this.rootNode.get_farther().get_farther().get_farther().get_closer().myVantage() + " " + this.rootNode.get_farther().get_farther().get_farther().get_farther().myVantage()
-//        );
-        System.out.println("ROOT: " + this.rootNode.myVantage());
-        System.out.println("CLOSER: " + this.rootNode.get_closer().myVantage());
-        System.out.println("FURTHER: " + this.rootNode.get_farther().myVantage());
     }
 
     public List<String> findPartitions(final P queryPoint, final double maxDistance, int nopartitions) {

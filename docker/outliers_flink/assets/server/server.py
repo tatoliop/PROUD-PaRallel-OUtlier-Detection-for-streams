@@ -66,9 +66,26 @@ class S(BaseHTTPRequestHandler):
         if self.path == '/start':
             tmp_body = self.rfile.read(content_len).decode()
             body = json.loads(tmp_body)
-            cmd = 'flink run -d $ARTIFACTS/$JOB_NAME --space ' + body["space"] + ' --algorithm ' + body["algorithm"] + ' --W "' + body["w"] + '" --S "' + body["s"] + '" --k "' + body["k"] + '" --R "' + body["r"] + '" --dataset ' + body["dataset"] + ' --partitioning ' + body["partitioning"]
-            if body['treeNumber']:
-                cmd += ' --tree_init ' + str(body["treeNumber"])
+            cmd = 'flink run --parallelism 16 -d $ARTIFACTS/$JOB_NAME '
+            cmd += ' --algorithm ' + str(body["algorithm"])
+            cmd += ' --W "' + str(body["w"]) + '"'
+            cmd += ' --S "' + str(body["s"]) + '"'
+            cmd += ' --k "' + str(body["k"]) + '"'
+            cmd += ' --R "' + str(body["r"]) + '"'
+            cmd += ' --dataset ' + str(body["dataset"])
+            cmd += ' --partitioning ' + str(body["partitioning"])
+            cmd += ' --sample_size ' + str(body["treeNumber"])
+            cmd += ' --partitions "' + str(body["partitions"]) + '"'
+            cmd += ' --distance "' + str(body["distance"]) + '"'
+            cmd += ' --policy ' + str(body["adaptivity"])
+            if body["adaptivity"] != "static":
+                cmd += ' --adapt_range ' + str(body["range"])
+                cmd += ' --adapt_over ' + str(body["overload"])
+                cmd += ' --adapt_cost ' + str(body["cost_function"])
+                cmd += ' --buffer_period ' + str(body["buffer_period"])
+                if body["adaptivity"] == "advanced":
+                    cmd += ' --adapt_queue ' + str(body["queue"])
+                    cmd += ' --adapt_under ' + str(body["underload"])
             cmd += ' && flink run -d -c custom_source.Custom_source $ARTIFACTS/$JOB_NAME --dataset ' + body["dataset"]
             result = subprocess.run([cmd], shell=True, stdout=subprocess.PIPE).stdout.decode('utf-8')
             jobs = [r.split()[1] for r in re.findall("JobID \w*", result)]

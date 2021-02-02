@@ -57,18 +57,24 @@ class VPTreeNode<P, E extends P> implements Serializable{
         this.points = new ArrayList<>(points);
 
         // All nodes must have a vantage point; choose one at random from the available points
-        //this.vantagePoint = this.points.get(new Random().nextInt(points.size()));
+        this.vantagePoint = this.points.get(new Random().nextInt(points.size()));
+
+        //For testing
+        //this.vantagePoint = this.points.get(0);
 
         //OUTLIER DETECTION CHANGE VP SELECTION METHOD
-        this.points.sort((E e1, E e2) -> {
+
+        /*this.points.sort((E e1, E e2) -> {
             Data_basis first = (Data_basis) e1;
             Data_basis second = (Data_basis) e2;
             return first.compareTo(second);
         });
         int midPoint = this.points.size() / 2;
         this.vantagePoint = this.points.get(midPoint);
+        System.out.println(midPoint);
+        System.out.println(this.vantagePoint);
+*/
         //END OUTLIER DETECTION CHANGE VP SELECTION METHOD
-
 
         this.anneal();
     }
@@ -375,19 +381,12 @@ class VPTreeNode<P, E extends P> implements Serializable{
 
     //OUTLIER DETECTION CUSTOM FUNCTIONS
 
-    protected void myFunc() {
-        System.out.println(this.vantagePoint);
-        System.out.println(this.threshold);
-        System.out.println(this.closer.vantagePoint);
-        System.out.println(this.closer.threshold);
-        System.out.println(this.farther.vantagePoint);
-        System.out.println(this.farther.threshold);
-        //return this.vantagePoint;
-
+    protected Double getThresh(){
+        return threshold;
     }
 
-    protected String myVantage() {
-        return this.vantagePoint + " - " + this.threshold;
+    protected E getVP(){
+        return vantagePoint;
     }
 
     protected int minHeight() {
@@ -400,10 +399,6 @@ class VPTreeNode<P, E extends P> implements Serializable{
         else return Math.max(this.closer.maxHeight(), this.farther.maxHeight()) + 1;
     }
 
-    protected void setPartition(int partition) {
-        this.partition = partition;
-    }
-
     protected VPTreeNode get_closer() {
         return this.closer;
     }
@@ -412,8 +407,10 @@ class VPTreeNode<P, E extends P> implements Serializable{
         return this.farther;
     }
 
-    protected int show_partition() {
-        return this.partition;
+    //old
+
+    protected void setPartition(int partition) {
+        this.partition = partition;
     }
 
     public void findPartitions(final P queryPoint, final double maxDistance, final Collection<String> collection, final int height, final Boolean active) {
@@ -436,6 +433,7 @@ class VPTreeNode<P, E extends P> implements Serializable{
             else this.farther.findPartitions(queryPoint, maxDistance, collection, height - 1, false);
         }
     }
+
 
     //OUTLIER DETECTION END CUSTOM FUNCTIONS
 

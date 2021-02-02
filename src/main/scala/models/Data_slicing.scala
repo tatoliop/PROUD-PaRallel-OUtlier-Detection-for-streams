@@ -4,7 +4,7 @@ import mtree.DistanceFunctions.EuclideanCoordinate
 
 import scala.collection.mutable
 
-class Data_slicing(c_point: Data_basis) extends Data_basis(c_point.id, c_point.value, c_point.arrival, c_point.flag) with EuclideanCoordinate with Comparable[Data_slicing] with Ordered[Data_slicing]  {
+class Data_slicing(c_point: Data_basis) extends Data_basis(c_point.id, c_point.value, c_point.arrival, c_point.flag, c_point.countdown) with EuclideanCoordinate with Comparable[Data_slicing] with Ordered[Data_slicing]  {
 
   //Neighbor data
   var count_after: Int = 0
@@ -36,16 +36,21 @@ class Data_slicing(c_point: Data_basis) extends Data_basis(c_point.id, c_point.v
     */
   override def get(index: Int): Double = value(index)
 
-  override def compareTo(t: Data_slicing): Int = {
+  override   def compareTo(t: Data_slicing): Int = {
+    var res = 0
     val dim = Math.min(this.dimensions, t.dimensions)
     for (i <- 0 until dim) {
-      if (this.value(i) > t.value(i)) +1
-      else if (this.value(i) < t.value(i)) -1
-      else 0
+      if (this.value(i) > t.value(i)) res+=1
+      else if (this.value(i) < t.value(i)) res-=1
+      else res+=0
     }
-    if (this.dimensions > dim) +1
+    if (this.dimensions > dim) res+=1
+    else if(t.dimensions > dim)res-=1
+    if(res >=0) 1
     else -1
   }
 
   override def compare(that: Data_slicing): Int = this.compareTo(that)
+
+  override def contains(coord: Double): Boolean = value.contains(coord)
 }
