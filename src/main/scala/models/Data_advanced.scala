@@ -26,16 +26,22 @@ class Data_advanced(c_point: Data_basis) extends Data_naive(c_point: Data_basis)
     */
   override def get(index: Int): Double = value(index)
 
-  override def compareTo(t: Data_advanced): Int = {
+  override   def compareTo(t: Data_advanced): Int = {
+    var res = 0
     val dim = Math.min(this.dimensions, t.dimensions)
     for (i <- 0 until dim) {
-      if (this.value(i) > t.value(i)) +1
-      else if (this.value(i) < t.value(i)) -1
-      else 0
+      if (this.value(i) > t.value(i)) res+=1
+      else if (this.value(i) < t.value(i)) res-=1
+      else res+=0
     }
-    if (this.dimensions > dim) +1
+    if (this.dimensions > dim) res+=1
+    else if(t.dimensions > dim)res-=1
+    if(res >= 0) 1
     else -1
   }
 
   override def compare(that: Data_advanced): Int = this.compareTo(that)
+
+
+  override def contains(coord: Double): Boolean = value.contains(coord)
 }
