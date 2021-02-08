@@ -85,6 +85,10 @@ The available ports that are exposed from the Docker deployment through the abov
 - 8081: Flink's Web UI 
 - 3000: Grafana's Web UI
 
+## Acknowledgement
+
+This work is partially supported by the [**RAINBOW**](https://rainbow-h2020.eu/) project that has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 871403.
+
 ## References
 
 [1] 
