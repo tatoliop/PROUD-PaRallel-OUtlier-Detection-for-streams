@@ -1,16 +1,15 @@
 package main_job
 
 import java.util.Properties
-
 import models.Data_basis
 import org.apache.flink.api.common.state.MapStateDescriptor
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeHint, TypeInformation}
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.api.scala.createTypeInformation
+import org.apache.flink.api.scala.{ExecutionEnvironment, createTypeInformation}
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala.{DataStream, OutputTag, StreamExecutionEnvironment}
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
+import org.apache.flink.streaming.api.windowing.assigners.{SlidingEventTimeWindows, TumblingEventTimeWindows}
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.connectors.influxdb.{InfluxDBConfig, InfluxDBSink}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
@@ -117,8 +116,7 @@ object Outlier_detection {
     val myPartition = if (partitioning == "tree" || partition_policy != "static") new Tree_partitioning(common_R, sample_size, partitions, partitioning_file, file_delimiter, distance_type)
     else new Grid_partitioning(sample_size, partitions, partitioning_file, file_delimiter)
 
-    val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
-    env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
 
     //Broadcasted stream for control of balancing
     val control = if (partition_policy != "static")
@@ -176,7 +174,7 @@ object Outlier_detection {
       connection
         .assignAscendingTimestamps(r => r._2.arrival)
         .keyBy(_._1)
-        .timeWindow(Time.milliseconds(common_W), Time.milliseconds(common_S))
+        .window(SlidingEventTimeWindows.of(Time.milliseconds(common_W), Time.milliseconds(common_S)))
         .allowedLateness(Time.milliseconds(allowed_lateness))
 
     //Output outliers
@@ -188,13 +186,13 @@ object Outlier_detection {
     if (DEBUG) {
       main_output
         .keyBy(_._1)
-        .timeWindow(Time.milliseconds(common_S))
+        .window(TumblingEventTimeWindows.of(Time.milliseconds(common_S)))
         .process(new PrintOutliersNo)
         .print
     } else {
       main_output
         .keyBy(_._1)
-        .timeWindow(Time.milliseconds(common_S))
+        .window(TumblingEventTimeWindows.of(Time.milliseconds(common_S)))
         .process(new WriteOutliers)
         .addSink(new InfluxDBSink(influx_conf))
     }

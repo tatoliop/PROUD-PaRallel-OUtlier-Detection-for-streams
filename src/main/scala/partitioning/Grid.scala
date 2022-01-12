@@ -29,6 +29,14 @@ object Grid {
       for (i <- 1 to totalDims) {
         var tmpFound = false
         val neighbors: ListBuffer[String] = ListBuffer()
+        //If dimension does not have cuts
+        if(myGrid(i).isEmpty) {
+          tmpFound = true
+          //Found where it belongs in the dimension
+          resultString = if (i < totalDims) resultString + s"$i${delimiterIn}0$delimiterOut" else resultString + s"$i${delimiterIn}0"
+          //Also add it to the neighbors
+          neighbors += s"$i${delimiterIn}0"
+        }
         for (y <- myGrid(i).indices) {
           if (!tmpFound && value(i - 1) <= myGrid(i)(y)) { //We found it!
             tmpFound = true

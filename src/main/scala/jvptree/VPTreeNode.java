@@ -57,24 +57,10 @@ class VPTreeNode<P, E extends P> implements Serializable{
         this.points = new ArrayList<>(points);
 
         // All nodes must have a vantage point; choose one at random from the available points
-        this.vantagePoint = this.points.get(new Random().nextInt(points.size()));
+//        this.vantagePoint = this.points.get(new Random().nextInt(points.size()));
 
         //For testing
-        //this.vantagePoint = this.points.get(0);
-
-        //OUTLIER DETECTION CHANGE VP SELECTION METHOD
-
-        /*this.points.sort((E e1, E e2) -> {
-            Data_basis first = (Data_basis) e1;
-            Data_basis second = (Data_basis) e2;
-            return first.compareTo(second);
-        });
-        int midPoint = this.points.size() / 2;
-        this.vantagePoint = this.points.get(midPoint);
-        System.out.println(midPoint);
-        System.out.println(this.vantagePoint);
-*/
-        //END OUTLIER DETECTION CHANGE VP SELECTION METHOD
+        this.vantagePoint = this.points.get(0);
 
         this.anneal();
     }

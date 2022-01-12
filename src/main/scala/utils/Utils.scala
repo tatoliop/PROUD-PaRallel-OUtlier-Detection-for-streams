@@ -1,12 +1,13 @@
 package utils
 
-import org.apache.flink.api.common.functions.MapFunction
+import org.apache.flink.api.common.functions.{MapFunction, RichMapFunction}
 import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow
 import org.apache.flink.streaming.connectors.influxdb.InfluxDBPoint
 import org.apache.flink.util.Collector
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 object Utils {
@@ -34,6 +35,37 @@ object Utils {
           res + (key -> (res(key) + v._2))
         })
       group_outliers.foreach(record => out.collect(s"$key;${record._1};${record._2}"))
+    }
+  }
+
+  class PrintOutliersBinaryExplain(c_subspaces: List[List[Int]]) extends ProcessWindowFunction[(List[Int], Long, Query, ListBuffer[(Int,Int)]), String, Long, TimeWindow] {
+
+    private val subspaces = c_subspaces
+    private val tmpArray: Array[Int] = (for (_ <- subspaces) yield -1).toArray
+
+    override def process(key: Long, context: Context, elements: scala.Iterable[(List[Int], Long, Query, ListBuffer[(Int,Int)])], out: Collector[String]): Unit = {
+      val submap = mutable.HashMap[Int,Array[Int]]().withDefaultValue(tmpArray)
+      elements.foreach { r =>
+        val tmpIndex = subspaces.indexOf(r._1)
+        r._4.foreach{ id =>
+          val newArray = submap.getOrElse(id._1, tmpArray)
+          newArray(tmpIndex) = id._2
+          submap.update(id._1, newArray)
+        }
+      }
+//      submap.foreach(r => out.collect(s"$key;${r._1};${r._2.map(ex=> categoryString(ex)).mkString(";")}"))
+      out.collect(s"$key;${submap.size}")
+    }
+  }
+
+  class WriteOutliersEx extends RichMapFunction[(List[Int],Long, Utils.Query, ListBuffer[(Int,Int)]), InfluxDBPoint]{
+    override def map(value: (List[Int], Long, Query, ListBuffer[(Int, Int)])): InfluxDBPoint = {
+      val taskId = getRuntimeContext.getIndexOfThisSubtask
+      val measurement = "outliers"
+      val timestamp = value._2
+      val tags = Map[String, String]("Task" -> taskId.toString, "Subspace" -> value._1.mkString(","), "W" -> value._3.W.toString, "S" -> value._3.S.toString, "k" -> value._3.k.toString, "R" -> value._3.R.toString).asJava
+      val fields = Map[String, Object]("Outliers" -> value._4.size.asInstanceOf[Object], "Ids" -> value._4.mkString(";").asInstanceOf[Object]).asJava
+      new InfluxDBPoint(measurement, timestamp, tags, fields)
     }
   }
 
@@ -81,7 +113,6 @@ object Utils {
       new InfluxDBPoint(measurement, timestamp, null, fields)
     }
   }
-
 
   class GroupCostFunction extends ProcessWindowFunction[(Long, String), String, Long, TimeWindow] {
     override def process(key: Long, context: Context, elements: scala.Iterable[(Long, String)], out: Collector[String]): Unit = {
